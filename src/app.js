@@ -2,6 +2,8 @@ import express from "express";
 import cors from "cors";
 import { config } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/product.routes.js";
+import storeRoutes from "./routes/store.routes.js";
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/stores", storeRoutes);
 
 
 app.use((req, res) => {
