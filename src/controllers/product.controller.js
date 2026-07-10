@@ -6,12 +6,7 @@ export const createProduct = async (req, res, next) => {
     const product = await createProductService({ name, sku });
     res.status(201).json(product);
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        error: { message: "SKU already exists" },
-      });
-    }
-    next(error);
+    next(error); 
   }
 };
 

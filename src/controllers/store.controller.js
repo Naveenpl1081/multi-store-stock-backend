@@ -6,11 +6,6 @@ export const createStore = async (req, res, next) => {
     const store = await createStoreService({ name });
     res.status(201).json(store);
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        error: { message: "Store name already exists" },
-      });
-    }
     next(error);
   }
 };
