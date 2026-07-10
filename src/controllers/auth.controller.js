@@ -6,11 +6,6 @@ export const register = async (req, res, next) => {
     const result = await registerUser({ username, email, password });
     res.status(201).json(result);
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        error: { message: "Email is already registered" },
-      });
-    }
     next(error);
   }
 };

@@ -17,7 +17,7 @@ export const authenticate = (req, res, next) => {
     next();
   } catch (error) {
     if (error.name === "JsonWebTokenError" || error.name === "TokenExpiredError") {
-      return res.status(401).json({ error: { message: "Invalid or expired token" } });
+      return next(new AppError("Invalid or expired token", 401));
     }
     next(error);
   }

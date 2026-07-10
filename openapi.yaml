@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: Multi-Store Stock Movement API
+  version: 1.0.0
+  description: >
+    API for managing products, stores, and per-store stock levels.
+    Supports role-based access (ADMIN, SHOPPER), concurrency-safe
+    stock adjustments, and atomic stock transfers between stores.
+
+servers:
+  - url: http://localhost:3002/api
+
+tags:
+  - name: Auth
+  - name: Products
+  - name: Stores
+  - name: Stock
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+      example:
+        error:
+          message: "Insufficient stock for this adjustment"
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, SHOPPER]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+
+    Product:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        sku:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Store:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Stock:
+      type: object
+      properties:
+        _id:
+          type: string
+        product:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Product'
+        store:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/Store'
+        quantity:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TransferResult:
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/Stock'
+        destination:
+          $ref: '#/components/schemas/Stock'
+
+  responses:
+    Unauthorized:
+      description: Missing, invalid, or expired authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Authenticated but not authorized (non-admin on admin-only route)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Referenced product or store does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Validation error (invalid input, insufficient stock, etc.)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Duplicate resource (email, SKU, or store name)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new shopper account
+      description: Public registration always creates a SHOPPER account. Role cannot be set by the client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username:
+                  type: string
+                  example: john
+                email:
+                  type: string
+                  example: john@test.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: password123
+      responses:
+        '201':
+          description: Registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login as admin or shopper
+      description: Single login route for both roles. Role is read from the stored user record, not supplied by the client.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /products:
+    get:
+      tags: [Products]
+      summary: List all products
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Products]
+      summary: Create a product
+      description: Admin only.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, sku]
+              properties:
+                name:
+                  type: string
+                  example: Red T-Shirt
+                sku:
+                  type: string
+                  example: TSHIRT-RED-001
+      responses:
+        '201':
+          description: Product created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /stores:
+    get:
+      tags: [Stores]
+      summary: List all stores
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of stores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Store'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Stores]
+      summary: Create a store
+      description: Admin only.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  example: Downtown Branch
+      responses:
+        '201':
+          description: Store created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /stock:
+    get:
+      tags: [Stock]
+      summary: List stock levels
+      description: Any authenticated user (admin or shopper) can view. Supports an optional low-stock filter.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: threshold
+          in: query
+          required: false
+          schema:
+            type: number
+          description: Return only stock entries with quantity <= threshold. Computed on the backend.
+      responses:
+        '200':
+          description: List of stock entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stock'
+        '400':
+          description: Invalid threshold value
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /stock/adjust:
+    post:
+      tags: [Stock]
+      summary: Adjust stock quantity at a single store
+      description: >
+        Admin only. Positive delta increases stock, negative delta decreases it.
+        Negative adjustments are rejected with 400 if they would drive stock below zero,
+        enforced atomically at the database query level.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, storeId, delta]
+              properties:
+                productId:
+                  type: string
+                storeId:
+                  type: string
+                delta:
+                  type: number
+                  description: Positive to increase, negative to decrease. Cannot be zero.
+                  example: -5
+      responses:
+        '200':
+          description: Stock adjusted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Stock'
+        '400':
+          description: Invalid delta, or insufficient stock for a negative adjustment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /stock/transfer:
+    post:
+      tags: [Stock]
+      summary: Transfer stock from one store to another
+      description: >
+        Admin only. Decrements the source store and increments the destination store
+        as a single atomic MongoDB transaction — fully succeeds or fully fails.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, fromStoreId, toStoreId, quantity]
+              properties:
+                productId:
+                  type: string
+                fromStoreId:
+                  type: string
+                toStoreId:
+                  type: string
+                quantity:
+                  type: number
+                  minimum: 1
+                  example: 20
+      responses:
+        '200':
+          description: Transfer completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResult'
+        '400':
+          description: >
+            Invalid quantity, same-store transfer (fromStoreId equals toStoreId),
+            or insufficient stock at the source store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
