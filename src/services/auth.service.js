@@ -40,12 +40,12 @@ export const loginUser = async ({ email, password }) => {
 
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user) {
-    throw new AppError("Invalid email or password", 401);
+    throw new AppError("user not exist", 401);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError("Invalid email or password", 401);
+    throw new AppError("Invalid password", 401);
   }
 
   const token = generateToken(user);

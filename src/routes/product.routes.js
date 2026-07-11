@@ -1,10 +1,11 @@
 import express from "express";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware.js";
+import { authorize } from "../middleware/auth.middleware.js";
 import { createProduct, listProducts } from "../controllers/product.controller.js";
+import { ROLES } from "../constants/roles.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, listProducts);
-router.post("/", authenticate, requireAdmin, createProduct);
+router.get("/", authorize(), listProducts);
+router.post("/", authorize(ROLES.ADMIN), createProduct);
 
 export default router;

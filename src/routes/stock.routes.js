@@ -1,11 +1,12 @@
 import express from "express";
-import { authenticate, requireAdmin } from "../middleware/auth.middleware.js";
+import { authorize } from "../middleware/auth.middleware.js";
 import { listStock, adjustStock, transferStock } from "../controllers/stock.controller.js";
+import { ROLES } from "../constants/roles.js";
 
 const router = express.Router();
 
-router.get("/", authenticate, listStock);
-router.post("/adjust", authenticate, requireAdmin, adjustStock);
-router.post("/transfer", authenticate, requireAdmin, transferStock);
+router.get("/", authorize(), listStock);
+router.post("/adjust", authorize(ROLES.ADMIN), adjustStock);
+router.post("/transfer", authorize(ROLES.ADMIN), transferStock);
 
 export default router;

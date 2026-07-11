@@ -1,4 +1,5 @@
 // controllers/stock.controller.js
+import { HTTP_STATUS } from "../constants/http-status.js";
 import { getStockList, adjustStock as adjustStockService, transferStock as transferStockService } from "../services/stock.service.js";
 import { validateObjectId } from "../utils/validation.util.js";
 
@@ -6,7 +7,7 @@ export const listStock = async (req, res, next) => {
   try {
     const { threshold } = req.query;
     const stock = await getStockList({ lowStockThreshold: threshold });
-    res.status(200).json(stock);
+    res.status(HTTP_STATUS.OK).json(stock);
   } catch (error) {
     next(error);
   }
@@ -21,7 +22,7 @@ export const adjustStock = async (req, res, next) => {
     validateObjectId(storeId, "storeId");
 
     const result = await adjustStockService({ productId, storeId, delta });
-    res.status(200).json(result);
+    res.status(HTTP_STATUS.OK).json(result);
   } catch (error) {
     next(error);
   }
@@ -37,7 +38,7 @@ export const transferStock = async (req, res, next) => {
     validateObjectId(toStoreId, "toStoreId");
 
     const result = await transferStockService({ productId, fromStoreId, toStoreId, quantity });
-    res.status(200).json(result);
+    res.status(HTTP_STATUS.OK).json(result);
   } catch (error) {
     next(error);
   }
