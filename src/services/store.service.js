@@ -1,16 +1,18 @@
 import Store from "../models/Store.js";
 import AppError from "../utils/AppError.js";
+import { HTTP_STATUS } from "../constants/http-status.js";
 
 export const createStore = async ({ name }) => {
-  if (!name) {
-    throw new AppError("Store name is required", 400);
+  const sanitizedName = name.trim();
+
+  const existingStore = await Store.findOne({ name: { $regex: new RegExp(`^${sanitizedName}$`, "i") } });
+  if (existingStore) {
+    throw new AppError(`A store named '${sanitizedName}' already exists`, HTTP_STATUS.CONFLICT);
   }
 
-  const store = await Store.create({ name: name.trim() });
-  return store;
+  return await Store.create({ name: sanitizedName });
 };
 
 export const getAllStores = async () => {
-  const stores = await Store.find().sort({ createdAt: -1 });
-  return stores;
+  return await Store.find().sort({ createdAt: -1 }).lean();
 };

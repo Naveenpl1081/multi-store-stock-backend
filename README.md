@@ -80,7 +80,7 @@ constants/    # role definitions (ADMIN, SHOPPER)
 controllers/  # request/response handling
 services/     # business logic (auth, products, stores, stock)
 models/       # Mongoose schemas (User, Product, Store, Stock)
-middleware/   # authenticate, requireAdmin
+middleware/   # authorize — verifies JWT and enforces role-based access
 routes/       # route definitions per resource
 scripts/      # admin seed script
 utils/        # AppError, JWT helpers

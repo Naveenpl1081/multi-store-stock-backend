@@ -58,7 +58,7 @@ If any step inside the transaction throws — including the explicit throw when 
 ## Validation
 
 Every stock-changing endpoint validates: quantity/delta is a positive number where required, source and destination stores differ on transfer, referenced product/store exist (`404` if not), and sufficient stock exists (`400` if not). All errors return a consistent shape: `{ "error": { "message": "..." } }`, handled by a centralized error middleware.
-
 ## Role Enforcement
 
-Every stock-changing route (`/adjust`, `/transfer`, and product/store creation) is protected by two chained middlewares: `authenticate` (verifies the JWT and attaches the decoded `{ id, role }` to the request) followed by `requireAdmin` (rejects with `403` if `role !== "ADMIN"`). Role is never read from the request body or client-supplied data — it comes only from the signed JWT, which itself only ever reflects whatever role was stored on the user's document at login time.
+Every stock-changing route (`/adjust`, `/transfer`, and product/store creation) is protected by the `authorize(...allowedRoles)` middleware. It verifies the JWT from the `Authorization` header, attaches the decoded `{ id, role }` payload to the request, and rejects with `403` if the user's role isn't in the allowed list for that route (e.g. `authorize(ROLES.ADMIN)`). Requests with no token or an invalid/expired token are rejected with `401`. Role is never read from the request body or client-supplied data — it comes only from the signed JWT, which itself only ever reflects whatever role was stored on the user's document at login time.
+

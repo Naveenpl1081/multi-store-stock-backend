@@ -117,6 +117,112 @@ components:
         destination:
           $ref: '#/components/schemas/Stock'
 
+    # --- Response envelopes ---
+    # Every successful response is wrapped by the sendResponse() utility as
+    # { success, message, data }. Error responses (see `Error` above) are NOT
+    # wrapped this way — they come from a separate error middleware.
+    AuthResponseEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: User registered successfully
+        data:
+          $ref: '#/components/schemas/AuthResponse'
+
+    ProductEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Product created successfully
+        data:
+          $ref: '#/components/schemas/Product'
+
+    ProductListEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Products retrieved successfully
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
+
+    StoreEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Store created successfully
+        data:
+          $ref: '#/components/schemas/Store'
+
+    StoreListEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Stores retrieved successfully
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Store'
+
+    StockListEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Stock inventory retrieved successfully
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Stock'
+
+    StockEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Stock adjusted successfully
+        data:
+          $ref: '#/components/schemas/Stock'
+
+    TransferEnvelope:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Stock transferred successfully
+        data:
+          $ref: '#/components/schemas/TransferResult'
+
   responses:
     Unauthorized:
       description: Missing, invalid, or expired authentication token
@@ -179,7 +285,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/AuthResponseEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -208,7 +314,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
+                $ref: '#/components/schemas/AuthResponseEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -226,9 +332,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductListEnvelope'
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -257,7 +361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Product'
+                $ref: '#/components/schemas/ProductEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -279,9 +383,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Store'
+                $ref: '#/components/schemas/StoreListEnvelope'
         '401':
           $ref: '#/components/responses/Unauthorized'
     post:
@@ -307,7 +409,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Store'
+                $ref: '#/components/schemas/StoreEnvelope'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -337,9 +439,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockListEnvelope'
         '400':
           description: Invalid threshold value
           content:
@@ -381,7 +481,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stock'
+                $ref: '#/components/schemas/StockEnvelope'
         '400':
           description: Invalid delta, or insufficient stock for a negative adjustment
           content:
@@ -428,7 +528,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransferResult'
+                $ref: '#/components/schemas/TransferEnvelope'
         '400':
           description: >
             Invalid quantity, same-store transfer (fromStoreId equals toStoreId),
