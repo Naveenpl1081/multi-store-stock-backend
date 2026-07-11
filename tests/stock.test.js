@@ -13,10 +13,8 @@ describe("Stock operations", () => {
     const product = await createProduct();
     const store = await createStore();
 
-   
     await Stock.create({ product: product._id, store: store._id, quantity: 10 });
 
-    
     const requests = Array.from({ length: 5 }).map(() =>
       request(app)
         .post("/api/stock/adjust")
@@ -28,7 +26,6 @@ describe("Stock operations", () => {
 
     const succeeded = results.filter((r) => r.status === 200);
     const failed = results.filter((r) => r.status === 400);
-
 
     expect(succeeded.length).toBe(3);
     expect(failed.length).toBe(2);
@@ -57,8 +54,8 @@ describe("Stock operations", () => {
       });
 
     expect(res.status).toBe(200);
-    expect(res.body.source.quantity).toBe(30);
-    expect(res.body.destination.quantity).toBe(20);
+    expect(res.body.data.source.quantity).toBe(30);
+    expect(res.body.data.destination.quantity).toBe(20);
 
     const sourceStock = await Stock.findOne({ product: product._id, store: fromStore._id });
     const destStock = await Stock.findOne({ product: product._id, store: toStore._id });
@@ -85,12 +82,11 @@ describe("Stock operations", () => {
       });
 
     expect(res.status).toBe(400);
+
     expect(res.body.error.message).toMatch(/insufficient stock/i);
 
-   
     const sourceStock = await Stock.findOne({ product: product._id, store: fromStore._id });
     expect(sourceStock.quantity).toBe(10);
-
 
     const destStock = await Stock.findOne({ product: product._id, store: toStore._id });
     expect(destStock).toBeNull();
@@ -144,7 +140,8 @@ describe("Stock operations", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.length).toBe(1);
-    expect(res.body[0].quantity).toBe(3);
+
+    expect(res.body.data.length).toBe(1);
+    expect(res.body.data[0].quantity).toBe(3);
   });
 });

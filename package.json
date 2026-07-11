@@ -7,7 +7,8 @@
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
     "seed:admin": "node src/scripts/seedAdmin.js",
-    "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/.bin/jest --runInBand"
+    "test": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/.bin/jest --runInBand",
+    "test:coverage": "cross-env NODE_ENV=test node --experimental-vm-modules node_modules/.bin/jest --runInBand --coverage"
   },
   "keywords": [],
   "author": "",

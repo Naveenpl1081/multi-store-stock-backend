@@ -3,60 +3,49 @@ import User from "../models/User.js";
 import AppError from "../utils/AppError.js";
 import { generateToken } from "../utils/token.util.js";
 import { ROLES } from "../constants/roles.js";
-import { validateEmail } from "../utils/validation.util.js";
+import { HTTP_STATUS } from "../constants/http-status.js";
 
 const SALT_ROUNDS = 10;
 
 export const registerUser = async ({ username, email, password }) => {
-    if (!username?.trim() || !email?.trim() || !password) {
-      throw new AppError("Username, email, and password are required", 400);
-    }
-  
-    validateEmail(email.trim());
-  
-    if (password.length < 6) {
-      throw new AppError("Password must be at least 6 characters", 400);
-    }
-  
-    const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-  
-    const user = await User.create({
-      username: username.trim(),
-      email: email.trim().toLowerCase(),
-      password: hashedPassword,
-      role: ROLES.SHOPPER
-    });
-  
-    return {
-      user: { id: user._id, username: user.username, email: user.email, role: user.role },
-      token: generateToken(user),
-    };
-  };
+  const sanitizedEmail = email.trim().toLowerCase();
 
-export const loginUser = async ({ email, password }) => {
-  if (!email || !password) {
-    throw new AppError("Email and password are required", 400);
+
+  const existingUser = await User.findOne({ email: sanitizedEmail });
+  if (existingUser) {
+    throw new AppError("Email is already registered", HTTP_STATUS.CONFLICT);
   }
 
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+
+  const user = await User.create({
+    username: username.trim(),
+    email: sanitizedEmail,
+    password: hashedPassword,
+    role: ROLES.SHOPPER
+  });
+
+  return {
+    user: { id: user._id, username: user.username, email: user.email, role: user.role },
+    token: generateToken(user),
+  };
+};
+
+export const loginUser = async ({ email, password }) => {
   const user = await User.findOne({ email: email.toLowerCase() });
+  
+
   if (!user) {
-    throw new AppError("user not exist", 401);
+    throw new AppError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError("Invalid password", 401);
+    throw new AppError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
   }
 
-  const token = generateToken(user);
-
   return {
-    user: {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-    },
-    token,
+    user: { id: user._id, username: user.username, email: user.email, role: user.role },
+    token: generateToken(user),
   };
 };
