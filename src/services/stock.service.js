@@ -36,7 +36,7 @@ export const adjustStock = async ({ productId, storeId, delta }) => {
     return await Stock.findOneAndUpdate(
       { product: productId, store: storeId },
       { $inc: { quantity: numericDelta } },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
   }
 
@@ -59,7 +59,7 @@ export const adjustStock = async ({ productId, storeId, delta }) => {
       quantity: { $gte: decrementAmount },
     },
     { $inc: { quantity: -decrementAmount } },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!updated) {

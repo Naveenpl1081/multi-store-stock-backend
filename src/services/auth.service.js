@@ -36,12 +36,12 @@ export const loginUser = async ({ email, password }) => {
   
 
   if (!user) {
-    throw new AppError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
+    throw new AppError("User not found", HTTP_STATUS.UNAUTHORIZED);
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) {
-    throw new AppError("Invalid email or password", HTTP_STATUS.UNAUTHORIZED);
+    throw new AppError("Invalid password", HTTP_STATUS.UNAUTHORIZED);
   }
 
   return {
